@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin';            //For cross access (using RT
 import pathModule = require('path');                //Path operations
 import osModule = require('os');                    //Facilitates temporary file systems
 import fsModule = require('fs');                    //File stream module
-import { CirrusService, Ticket, TicketType } from "./models";
+import { CirrusService, Ticket } from "./models";   //Models I defined
 
 //Initialize admin configuration
 admin.initializeApp(functions.config().firebase);
@@ -39,7 +39,7 @@ exports.alertDelivery = functions.region('us-central1').storage.object().onFinal
         parsedTicket.storageLocation = filePath;
 
         //Do an additional check
-        if (parsedTicket.orderType !== TicketType.delivery)
+        if (parsedTicket.orderType !== "Delivery")
         {
             return null;
         }
@@ -84,7 +84,8 @@ exports.alertDelivery = functions.region('us-central1').storage.object().onFinal
             timeToLive: 60 * 60 * 2
         }
         //Create the date for the reference
-        let dateStr = getFormattedFirebaseDirectoryDateStringFrom(new Date());
+        let dateStr = "serverDate-"
+            + getFormattedFirebaseDirectoryDateStringFrom(Date.now().toString());
         if (parsedTicket.ticketInception !== null)
         {
             dateStr = getFormattedFirebaseDirectoryDateStringFrom(parsedTicket.ticketInception);
@@ -343,13 +344,13 @@ function parseTLKACTicketRawString(rawStr)
     }
     const lines = rawStr.split("\n");  //Split into lines
     let ticketNum: string = null;
-    let orderType: TicketType = null;
+    let orderType: string = null;
     let customerName: string = null;
     let phone: string = null;
     let streetAddress: string = null;
     let city: string = null;
     let customerRemarks: string = null;
-    let ticketInception: Date = null;
+    let ticketInception: string = null;
 
     //Validate it's a ticket from TLKAC
     if (lines.length < 1 || !lines[0].includes("The Little Kitchen"))
@@ -363,15 +364,34 @@ function parseTLKACTicketRawString(rawStr)
         ticketNum = lines[7].replace(/\D/g, '');
 
         //RegX the type of order
-        let rawOrderStr = lines[7].match('(Delivery)|(Take-out)|(Phone)|(Dine In)').toString();
-        if (rawOrderStr === "Take-out")                           //Small correction
+        const possOrderMatches = lines[7].match('(Delivery)|(Take-out)|(Phone)|(Dine In)');
+        let rawOrderStr = "";
+        if (possOrderMatches !== null && possOrderMatches.length > 0)
         {
-            rawOrderStr = "Take Out";
+            rawOrderStr = possOrderMatches[0].toString();
         }
-        orderType = TicketType[rawOrderStr];
+        //Corrections
+        switch (rawOrderStr)
+        {
+            case "Take-out":
+                {
+                    rawOrderStr = "Take Out";
+                    break;
+                }
+            case "Phone Order":
+                {
+                    rawOrderStr = "Phone";
+                    break;
+                }
+            default:
+                {
+                    break;
+                }
+        }
+        orderType = rawOrderStr;
     }
     //Line 8 has customer phone and name if not a dine in or take out order
-    if (lines.length > 8 && orderType !== TicketType.takeOut && orderType !== TicketType.dineIn)
+    if (lines.length > 8 && orderType !== "Take Out" && orderType !== "Dine In")
     {
         const custInfo = lines[8].split("   ");                 //Split based on consecutive spaces
         if (custInfo.length > 0)
@@ -385,7 +405,7 @@ function parseTLKACTicketRawString(rawStr)
         }
     }
     //Line 9 has the address if it's a delivery
-    if (lines.length > 9 && orderType === TicketType.delivery)
+    if (lines.length > 9 && orderType === "Delivery")
     {
         const addressInfo = lines[9].split("   ");
 
@@ -404,12 +424,12 @@ function parseTLKACTicketRawString(rawStr)
         city = city.trim();
     }
     //Line 12 has customer remarks if it's a delivery
-    if (lines.length > 12 && orderType === TicketType.delivery)
+    if (lines.length > 12 && orderType === "Delivery")
     {
         const remarksLine = lines[12];
         if (remarksLine.includes("Remarks:"))
         {
-            customerRemarks = remarksLine;
+            customerRemarks = remarksLine.replace('\r', '');
 
             //Build the rest of the remarks
             let current = 13;
@@ -421,17 +441,17 @@ function parseTLKACTicketRawString(rawStr)
                 }
                 else
                 {
-                    customerRemarks += "\n" + lines[current];
+                    customerRemarks += "\n" + lines[current].replace('\r', '');
                     current += 1;
                 }
             }
         }
     }
     //There's a time stamp somewhere near the bottom of the ticket. It's not consistent, so regex
-    const possMatches = rawStr.match("\d+\/\d+\/\d+ \d+:\d+:\d+ (AM|PM)")
-    if (possMatches.length > 0)
+    const possMatches = rawStr.match("\\d+\\/\\d+\\/\\d+ \\d+:\\d+:\\d+ (AM|PM)")
+    if (possMatches !== null && possMatches.length > 0)
     {
-        ticketInception = new Date(possMatches[0].toString());
+        ticketInception = possMatches[0].toString();
     }
     const retVal = new Ticket();
     retVal.ticketNum = ticketNum;
@@ -445,9 +465,10 @@ function parseTLKACTicketRawString(rawStr)
     return retVal;
 }
 
-function getFormattedFirebaseDirectoryDateStringFrom(dateIn: Date)
+function getFormattedFirebaseDirectoryDateStringFrom(dateIn: string)
 {
-    return dateIn.getDate().toString()
-        + "-" + (dateIn.getMonth() + 1).toString()          //Months start at 0 for some reason
-        + "-" + (dateIn.getFullYear()).toString() + "/";
+    const date = new Date(dateIn);
+    return date.getDate().toString()
+        + "-" + (date.getMonth() + 1).toString()          //Months start at 0 for some reason
+        + "-" + (date.getFullYear()).toString() + "/";
 }
