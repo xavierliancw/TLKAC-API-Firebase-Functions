@@ -62,6 +62,11 @@ exports.alertDelivery = functions.region('us-central1').storage.object().onFinal
         {
             title += ", " + parsedTicket.city;
         }
+        let remarks = ""
+        if (!parsedTicket.customerRemarks)
+        {
+            remarks = parsedTicket.customerRemarks
+        }
         //Build the push note payload
         payload = {
             notification: {
@@ -73,7 +78,7 @@ exports.alertDelivery = functions.region('us-central1').storage.object().onFinal
             data: {
                 "address": parsedTicket.streetAddress,
                 "city": parsedTicket.city,
-                "remarks": parsedTicket.customerRemarks,
+                "remarks": remarks,
                 "customer": parsedTicket.customerName,
                 "phone": parsedTicket.phone,
                 "inception": parsedTicket.ticketInception
@@ -177,7 +182,8 @@ exports.hearbeat = functions.https.onRequest((req, res) =>
         localTime: req.body.localTime,
         account: req.body.account
     };
-    return admin.database().ref("hearbeats/" + service).set(heartbeatForDB).then(() =>
+    const dbPath = "hearbeats/" + service + "/" + heartbeatForDB.account
+    return admin.database().ref(dbPath).set(heartbeatForDB.localTime).then(() =>
     {
         res.status(200).send();
     });
@@ -393,7 +399,7 @@ function parseTLKACTicketRawString(rawStr)
     //Line 8 has customer phone and name if not a dine in or take out order
     if (lines.length > 8 && orderType !== "Take Out" && orderType !== "Dine In")
     {
-        const custInfo = lines[8].split("   ");                 //Split based on consecutive spaces
+        const custInfo = lines[8].split("  ");                  //Split based on consecutive spaces
         if (custInfo.length > 0)
         {
             phone = custInfo[0].trim();                         //Phone is on the far left
@@ -407,27 +413,47 @@ function parseTLKACTicketRawString(rawStr)
     //Line 9 has the address if it's a delivery
     if (lines.length > 9 && orderType === "Delivery")
     {
-        const addressInfo = lines[9].split("   ");
+        const addressRaw = lines[9];
+        const addressSplit = lines[9].split("  ");              //Split based on consecutive spaces
 
-        //Make sure it's not empty
-        if (addressInfo.length > 1)
+        if (addressSplit.length > 1)
         {
-            streetAddress = addressInfo[0];             //Address is on the left
-            city = addressInfo[addressInfo.length - 1]  //City is on the right
+            //Street address is everything before the last element
+            streetAddress = ""  //Reset first, then build
+            for (let x = 0; x < addressSplit.length - 1; x++)
+            {
+                streetAddress += addressSplit[x]
+            }
+            city = addressSplit[addressSplit.length - 1]  //City is the last element
+        }
+        else 
+        {
+            //Can't discern where the city starts, so just put the entire thing in the street
+            streetAddress = addressRaw
+            city = ""
         }
         //If city ends up being the same as address, then forget the city
         if (city === streetAddress)
         {
             city = "";
         }
-        streetAddress = streetAddress.trim();
-        city = city.trim();
+        //Clean up
+        if (streetAddress !== null)
+        {
+            streetAddress = streetAddress.trim();
+            streetAddress = streetAddress.replace("  ", " ")
+        }
+        if (city !== null)
+        {
+            city = city.trim();
+            city = city.replace("  ", " ")
+        }
     }
     //Line 12 has customer remarks if it's a delivery
     if (lines.length > 12 && orderType === "Delivery")
     {
         const remarksLine = lines[12];
-        if (remarksLine.includes("Remarks:"))
+        if (remarksLine.includes("Remarks:") || remarksLine.includes("Cross Street"))
         {
             customerRemarks = remarksLine.replace('\r', '');
 
@@ -446,6 +472,10 @@ function parseTLKACTicketRawString(rawStr)
                 }
             }
         }
+    }
+    if (!customerRemarks)
+    {
+        customerRemarks = ""
     }
     //There's a time stamp somewhere near the bottom of the ticket. It's not consistent, so regex
     const possMatches = rawStr.match("\\d+\\/\\d+\\/\\d+ \\d+:\\d+:\\d+ (AM|PM)")
