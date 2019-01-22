@@ -1,0 +1,9 @@
+{
+    "version": "2.0.0",
+    "tasks": [{
+        "label": "Run NPM Mocha Chai Tests",
+        "command": "cd functions\nnpm run test", 
+        "args": [],
+        "type": "shell"
+    }]
+}
