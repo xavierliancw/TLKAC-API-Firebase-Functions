@@ -1,0 +1,60 @@
+5PE      Del Rislee Kitchen #1
+FM            14972 Rey Elfar
+          Vena Cavas, CA 92627
+             (999) 999-9999
+
+EServer:                       Station: 7
+F----------------------------------------
+Order #: 304632                 Delivery
+(949) 606-7271                    Robert
+12345 The Streeters           Dana Point
+Guests: 1
+----------------------------------------
+Cross Street:  .Rockshill & Reed Lantern
+Remarks: This is a remark that is going
+to be multiline.
+----------------------------------------
+1 KP Tofu                          10.59
+  > HOLD > 5:02:43 PM
+  Wr
+1 Chow Mein Chicken                 9.99
+  > HOLD > 5:02:43 PM
+1 Egg Rolls                         6.99
+  > HOLD > 5:02:43 PM
+1 Egg Rolls                         6.99
+  > HOLD > 5:02:43 PM
+1 Beef W Broccoli                  12.59
+  > HOLD > 5:02:43 PM
+  Br
+1 Kung Pao Shrimp                  14.59
+  > HOLD > 5:02:43 PM
+  Wr
+1 Orange Zest Chicken              10.99
+  > HOLD > 5:02:43 PM
+  Br
+
+
+SUB TOTAL:                         72.73
+Tax 1:                              5.64
+                                ========
+PEAMOUNT DUE:                $78.37
+FMF
+          12/8/2018 4:53:50 PM
+
+****************************************
+Recommended Tip
+18% = $13.09
+20% = $14.55
+
+****************************************
+
+
+
+
+
+
+
+
+
+
+d0
