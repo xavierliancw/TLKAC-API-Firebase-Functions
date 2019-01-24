@@ -19,6 +19,8 @@ describe('SVCParse', () =>
                 expect(inTick.employeeName).to.equal("Dude")
                 expect(inTick.ticketNum).to.equal("304632")
                 expect(inTick.orderType).to.equal("Delivery")
+                expect(inTick.phone).to.equal("(949) 606-7271")
+                expect(inTick.customerName).to.equal("Robert")
                 done()
             })
             .catch(err =>

@@ -44,6 +44,16 @@ export class SVCTicketParse
                             ticketBuild.orderType = tuple[1]
                         }
                     }
+                    if (isNullOrUndefined(ticketBuild.customerName) ||
+                        isNullOrUndefined(ticketBuild.phone))
+                    {
+                        var tuple = this.parsePhoneAndNameCustFrom(line)
+                        if (!isNullOrUndefined(tuple))
+                        {
+                            ticketBuild.phone = tuple[0]
+                            ticketBuild.customerName = tuple[1]
+                        }
+                    }
                 })
                 .on('close', () => 
                 {
@@ -65,20 +75,20 @@ export class SVCTicketParse
         })
     }
 
-    private static readStreamForFile(atPath: string): fs.ReadStream
+    private static parsePhoneAndNameCustFrom(line: string): [string, string]
     {
-        if (!fs.existsSync(atPath))
-        {
-            throw Error("This path does not exist: {atPath}")
-        }
-        return fs.createReadStream(atPath)
-    }
+        const phoneRegEx = "\\(\\d{3}\\) \\d{3}-\\d{4}"
+        const matches = line.match(phoneRegEx)
 
-    //https://stackoverflow.com/a/16013228/8462094
-    private static lineReaderFor(readStream: fs.ReadStream): ReadLine.Interface
-    {
-        var os = new Stream.Duplex  //Writable and readable stream
-        return ReadLine.createInterface({ input: readStream, output: os, terminal: false })
+        //A match must exist, there must only be 1 match, match must start at the beginning,
+        //the # of characters in the line has be longer than just the phone
+        if (isNullOrUndefined(matches) || matches.length != 1 || 
+            !line.startsWith(matches[0]) || line.length < matches[0].length)
+        {
+            return null //Fast fail
+        }
+        const lineWithoutPhone = line.substr(matches[0].length)
+        return [matches[0], lineWithoutPhone.trim()]
     }
 
     private static parseTicketNumberAndTypeFrom(line: string): [string, string]
@@ -147,5 +157,21 @@ export class SVCTicketParse
         }
         //Plus one to convert index to length
         return line.substr(startIndex, endIndexSearch - startIndex + 1)
+    }
+
+    private static readStreamForFile(atPath: string): fs.ReadStream
+    {
+        if (!fs.existsSync(atPath))
+        {
+            throw Error("This path does not exist: {atPath}")
+        }
+        return fs.createReadStream(atPath)
+    }
+
+    //https://stackoverflow.com/a/16013228/8462094
+    private static lineReaderFor(readStream: fs.ReadStream): ReadLine.Interface
+    {
+        var os = new Stream.Duplex  //Writable and readable stream
+        return ReadLine.createInterface({ input: readStream, output: os, terminal: false })
     }
 }
