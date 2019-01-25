@@ -1,0 +1,45 @@
+5PE      Del Rislee Kitchen #1
+FM            14972 Rey Elfar
+          Vena Cavas, CA 92627
+             (999) 999-9999
+
+EServer: X                     Station: 6
+F----------------------------------------
+Order #: 292223                 Delivery
+(123) 123-1234              Owen / Sonya
+33333 Abcdef Dr; A            Dana Point
+Guests: 1
+----------------------------------------
+1 Chow Mein Vege                    9.99
+1 Fried Rice Vege                   9.99
+1 Monggolian Beef                  12.59
+  Wr
+1 Orange Zest Shrimp               14.59
+  Wr
+1 Cream Cheese Wontons              6.99
+
+
+SUB TOTAL:                         54.15
+Tax 1:                              4.20
+                                ========
+PEAMOUNT DUE:                $58.35
+FMF
+          9/16/2018 4:43:08 PM
+
+****************************************
+Recommended Tip
+18% = $9.75
+20% = $10.83
+
+****************************************
+
+
+
+
+
+
+
+
+
+
+d0

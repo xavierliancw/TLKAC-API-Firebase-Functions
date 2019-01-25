@@ -10,6 +10,7 @@ export class Ticket
     customerRemarks: string
     ticketInception: string
     storageLocation: string
+    orderTotal: string
 }
 
 export enum CirrusService
